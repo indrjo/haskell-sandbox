@@ -1,0 +1,21 @@
+cabal-version:      3.0
+name:               tiny-lambda
+version:            0.1.0.0
+synopsis:           A tiny interpreter for a quite small
+                    subset of Lambda Calculus language
+license:            MIT
+license-file:       LICENSE
+author:             Indrjo Dedej (@indrjo)
+maintainer:         dedej.indrjo@gmail.com
+category:           Math Programming Language
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md README.md
+-- extra-source-files:
+
+library
+    ghc-options:      -Wall
+    build-depends:    base
+                    , parsec
+    default-language: Haskell2010
+    exposed-modules:  Terms SExprParser
+    hs-source-dirs:   src

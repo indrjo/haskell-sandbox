@@ -1,0 +1,23 @@
+cabal-version:      3.0
+name:               tex-list-missings
+version:            0.1.0.0
+synopsis:           List missings files from a TeX log
+-- description:
+license:            NONE
+-- license-file:       LICENSE
+author:             dedej.indrjo@gmail.com
+maintainer:         Indrjo Dedej
+-- copyright:
+build-type:         Simple
+-- extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+
+executable tex-list-missings
+    ghc-options:      -Wall
+    main-is:          Main.hs
+    other-modules:    TeXLogParser
+    build-depends:    base
+                    , parsec
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
