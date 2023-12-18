@@ -10,16 +10,16 @@ import Tlmgr
 
 main :: IO ()
 main = getArgs >>= \case
-  [engine,texf] -> flytex engine texf
-  [texf]        -> flytex "pdflatex" texf
+  [engine,texf] -> strelitzia engine texf
+  [texf]        -> strelitzia "pdflatex" texf
   _             -> printUsage
 
-flytex :: FilePath -> FilePath -> IO ()
-flytex engine texf =
+strelitzia :: FilePath -> FilePath -> IO ()
+strelitzia engine texf =
   makeTeX engine texf >>= \proc_out ->
     tlmgrInstall =<< tlmgrSearch (listNotFounds proc_out)
 
 printUsage :: IO ()
 printUsage =
-  putStrLn $ "\n USAGE: $ flytex [ENGINE] TEXFILE"
+  putStrLn $ "\n USAGE: $ strelitzia [ENGINE] TEXFILE"
              ++ "\n The default ENGINE is pdflatex\n"

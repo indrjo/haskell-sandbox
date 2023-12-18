@@ -2,8 +2,8 @@
 
 .RECIPEPREFIX = >
 
-INSTALLDIR := $(HOME)/.local/bin
-PROGPATH := $(INSTALLDIR)/flytex
+INSTALLDIR = $(HOME)/.local/bin
+PROGPATH = $(INSTALLDIR)/strelitzia
 
 $(PROGPATH): src/*.hs *.cabal
 > @cabal build -O2 -p
