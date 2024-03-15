@@ -3,9 +3,8 @@
 module Main (main) where
 
 import System.Environment (getArgs)
-
 import Parsers (listNotFounds)
-import TeX 
+import TeX
 import Tlmgr
 
 main :: IO ()
@@ -15,9 +14,19 @@ main = getArgs >>= \case
   _             -> printUsage
 
 strelitzia :: FilePath -> FilePath -> IO ()
-strelitzia engine texf =
-  makeTeX engine texf >>= \proc_out ->
-    tlmgrInstall =<< tlmgrSearch (listNotFounds proc_out)
+strelitzia engine texf = do
+  notFounds <- listNotFounds <$> makeTeX engine texf
+  if null notFounds
+    then putStrLn "no missing file! good..."
+    else do
+      connected <- contactPackageRepo
+      if connected
+        then do
+          packages <- tlmgrSearch notFounds
+          putStrLn $ "packages to be installed: " ++ unwords packages
+          tlmgrInstall packages
+        else
+          putStrLn "cannot reach the package repository!"
 
 printUsage :: IO ()
 printUsage =

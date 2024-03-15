@@ -1,6 +1,7 @@
 
 module Parsers ( listPackageNames
                , listNotFounds
+               , repoUrl
                ) where
 
 import Text.Parsec
@@ -51,6 +52,20 @@ notFoundParser =
 
 quoteMarks :: String
 quoteMarks = "'\"`"
+
+
+-- ------------------------------------------------------------------------
+-- Parse `tlmgr option repository` output to extract the url.
+-- ------------------------------------------------------------------------
+
+repoUrl :: String -> Either ParseError String
+repoUrl = parse repoUrlParser ""
+
+repoUrlParser :: Parser String
+repoUrlParser = do
+  _ <- string "Default package repository (repository):"
+  spaces
+  many1 $ noneOf "\n"
 
 
 -- ------------------------------------------------------------------------

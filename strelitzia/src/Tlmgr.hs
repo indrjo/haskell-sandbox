@@ -1,9 +1,12 @@
 
-module Tlmgr (tlmgrInstall, tlmgrSearch) where
+module Tlmgr ( tlmgrInstall
+             , tlmgrSearch
+             , contactPackageRepo
+             ) where
 
 import Data.List (intercalate)
 import RunShell
-import Parsers (listPackageNames)
+import Parsers (listPackageNames, repoUrl)
 
 
 -- DESCRIPTION
@@ -35,4 +38,23 @@ searchPattern names  = "'/(" ++ intercalate "|" names ++ ")'"
 tlmgrInstall :: [String] -> IO ()
 tlmgrInstall packages =
   callCommand $ "tlmgr install " ++ unwords packages
+
+
+-- ------------------------------------------------------------------------
+-- Other.
+-- ------------------------------------------------------------------------
+
+-- Check if you can contact the default repository.
+contactPackageRepo :: IO Bool
+contactPackageRepo = do
+  proc_out <- runShell "tlmgr option repository" ""
+  case repoUrl proc_out of
+    Left err -> do
+      -- Just in case... who knows?
+      putStrLn "contactPackageRepo: error during parsing"
+      putStrLn $ show err
+      return False
+    Right url -> do
+      putStrLn $ "trying to contact " ++ url
+      wgetSpider url
 
