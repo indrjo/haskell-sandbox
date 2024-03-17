@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import System.FilePath (replaceExtension)
 import System.Environment (getArgs)
 import Parsers (listNotFounds)
 import TeX
@@ -15,7 +16,8 @@ main = getArgs >>= \case
 
 strelitzia :: FilePath -> FilePath -> IO ()
 strelitzia engine texf = do
-  notFounds <- listNotFounds <$> makeTeX engine texf
+  makeTeX engine texf 50 -- to be improved!
+  notFounds <- listNotFounds <$> readFile (replaceExtension texf "log")
   if null notFounds
     then putStrLn "no missing file! good..."
     else do
