@@ -1,11 +1,12 @@
 
 module RunShell ( runShell
-                , callCommand
+                , simpleCallCommand
                 , wgetSpider
                 ) where
 
 import System.Process (readCreateProcessWithExitCode, shell, callCommand)
 import System.Exit (ExitCode(..))
+import System.IO.Error (catchIOError)
 
 -- Make the host OS run some command, and return all its output as a unique
 -- string and the the exit status. The second argument is a string to be
@@ -21,12 +22,16 @@ runShell comm inpstr = do
   (_, out) <- readShellCommand comm inpstr
   return out
 
-quote :: String -> String
-quote str = "'" ++ str ++ "'"
+-- Like `callCommand`, but handles exceptions by ignoring them.
+simpleCallCommand :: String -> IO ()
+simpleCallCommand cmd = catchIOError (callCommand cmd) (\_ -> return ())
 
 -- Check if you can reach a given url.
 wgetSpider :: String -> IO Bool
 wgetSpider url = do
   (exitcode, _) <- readShellCommand ("wget -q --spider " ++ quote url) ""
   return $ exitcode == ExitSuccess
+
+quote :: String -> String
+quote str = "'" ++ str ++ "'"
 

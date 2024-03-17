@@ -5,7 +5,7 @@ module Tlmgr ( tlmgrInstall
              ) where
 
 import Data.List (intercalate)
-import RunShell
+import RunShell (runShell, simpleCallCommand, wgetSpider)
 import Parsers (listPackageNames, repoUrl)
 
 
@@ -37,7 +37,7 @@ searchPattern names  = "'/(" ++ intercalate "|" names ++ ")'"
 
 tlmgrInstall :: [String] -> IO ()
 tlmgrInstall packages =
-  callCommand $ "tlmgr install " ++ unwords packages
+  simpleCallCommand $ "tlmgr install " ++ unwords packages
 
 
 -- ------------------------------------------------------------------------
