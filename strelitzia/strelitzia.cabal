@@ -19,6 +19,7 @@ executable strelitzia
                       RunShell
                       Tlmgr
                       TeX
+                      CLI
     -- other-extensions:
     build-depends:    base
                     , process
