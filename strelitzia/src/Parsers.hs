@@ -2,8 +2,10 @@
 module Parsers ( listPackageNames
                , listNotFounds
                , repoUrl
+               , listImports
                ) where
 
+import Control.Monad
 import Text.Parsec
 import Text.Parsec.String
 
@@ -19,7 +21,7 @@ import Text.Parsec.String
 -- ------------------------------------------------------------------------
 
 listPackageNames :: String -> [String]
-listPackageNames = listCaptures packageNameParser
+listPackageNames = listCaptures packageNameParser (:)
 
 -- From "\nNAME:\n" extract "NAME".
 packageNameParser ::  Parser String
@@ -40,7 +42,7 @@ packageNameParser =
 -- and isolates just FILE. See `quoteMarks` for a list of quotation marks
 -- used to wrap the name of the missing.
 listNotFounds :: String -> [String]
-listNotFounds = listCaptures notFoundParser
+listNotFounds = listCaptures notFoundParser (:)
 
 -- From a string complaining of something not found of the fashion shown
 -- above isolate the name.
@@ -69,21 +71,62 @@ repoUrlParser = do
 
 
 -- ------------------------------------------------------------------------
+-- Listing required packages
+-- ------------------------------------------------------------------------
+
+listImports :: String -> [String]
+listImports = listCaptures importsParser (++)
+
+importsParser :: Parser [String]
+importsParser = do
+  _ <- importKeyWordParser
+  spaces
+  optional squareParser
+  spaces
+  between (char '{') (char '}') commasParser
+
+importKeyWords :: [String]
+importKeyWords =
+  [ "\\documentclass"
+  , "\\usepackage"
+  , "\\requirepackage"
+  ]
+
+importKeyWordParser :: Parser String
+importKeyWordParser = choiceTry $ map string importKeyWords
+
+squareParser :: Parser String
+squareParser = between (char '[') (char ']') (many $ noneOf "]")
+
+singleWordParser :: Parser String
+singleWordParser = between spaces spaces (many1 alphaNum)
+
+commasParser :: Parser [String]
+commasParser = singleWordParser `sepEndBy` char ','
+
+
+-- ------------------------------------------------------------------------
 -- Helper functions.
 -- ------------------------------------------------------------------------
 
--- While consuming the input string, try a given parser: if it succeeds,
--- collect the match into a list, otherwise move on by one char and retry
--- until the input is wholly consumed.
-listCapturesParser :: Parser String -> Parser [String]
-listCapturesParser p =
-      try (p >>= \str ->
-                   (str :) <$> listCapturesParser p)
-  <|> try (anyChar >> listCapturesParser p)
-  <|> return []
+listCaptures :: (Monoid b) => Parser a -> (a -> b -> b) -> String -> b
+listCaptures p conc str =
+  either (\_ -> mempty) id $ parse (listCapturesParser p conc) "" str
 
--- Since `parse (listCapturesParser p) ""` never gives a `Left ParseError`,
--- it safe to expect always the `Right` value.
-listCaptures :: Parser String -> String -> [String]
-listCaptures p = either (\_ -> []) id . parse (listCapturesParser p) ""
+-- While consuming an input string, try a given parser: if it succeeds,
+-- collect the match into a list, otherwise move on by one character. The
+-- second argument of the function here is a binary function used to chain
+-- in some manner the results of the applied parser.
+listCapturesParser :: (Monoid b) => Parser a -> (a -> b -> b) -> Parser b
+listCapturesParser p conc =
+  choiceTry
+    [ do x  <- p
+         xs <- listCapturesParser p conc
+         return $ conc x xs
+    , anyChar >> listCapturesParser p conc
+    , return mempty
+    ]
+
+choiceTry :: [ParsecT s u m a] -> ParsecT s u m a
+choiceTry = foldr (\p q -> try p <|> q) mzero
 
