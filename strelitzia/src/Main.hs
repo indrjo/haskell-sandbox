@@ -2,35 +2,66 @@
 
 module Main (main) where
 
+import Control.Conditional (when, unlessM)
 import System.FilePath (replaceExtension)
-import System.Environment (getArgs)
-import Parsers (listNotFounds)
-import TeX
-import Tlmgr
+import System.Directory (doesFileExist)
+
+import Parsers (listNotFounds, listImports)
+import TeX (makeTeX)
+import Tlmgr (tlmgrSearch, tlmgrInstall, contactPackageRepo)
+import CLI (KeyVals(..), getMainCLIArgs)
+import Say (say, sayError, sayErrorAndDie)
+
 
 main :: IO ()
-main = getArgs >>= \case
-  [engine,texf] -> strelitzia engine texf
-  [texf]        -> strelitzia "pdflatex" texf
-  _             -> printUsage
+main = do
+  
+  -- Parse the CLI options here: key-val's and what remains of `getArgs`.
+  -- `remArgs` here is the list of commands that where not crunched during
+  -- the parse of the command line parameters.
+  (KeyVals engine m_importsFile maxHalts, remArgs) <- getMainCLIArgs
 
-strelitzia :: FilePath -> FilePath -> IO ()
-strelitzia engine texf = do
-  makeTeX engine texf 50 -- to be improved!
-  notFounds <- listNotFounds <$> readFile (replaceExtension texf "log")
+  -- Make sure the head of `remArgs` is the main file of your TeX project!
+  -- The tail is ignored.
+  when (null remArgs) $
+    sayErrorAndDie "no main file specified!"
+    
+  let mainFile = head remArgs in do
+    
+    unlessM (doesFileExist mainFile) $
+      sayErrorAndDie $ mainFile ++ " does not exist!"
+
+    -- If the file of the import is provided, use it to extract the
+    -- names of the packages imported there and try to install them.
+    case m_importsFile of
+      Just importsFile -> do
+        unlessM (doesFileExist importsFile) $
+          sayErrorAndDie $ importsFile ++ " does not exist!"
+        imports <- listImports <$> readFile importsFile
+        say $ "are these packages installed? " ++ unwords imports
+        tlmgrInstall imports
+      _ -> return ()
+
+    strelitzia engine mainFile maxHalts
+
+
+strelitzia :: FilePath -> FilePath -> Int -> IO ()
+strelitzia engine mainFile maxHalts = do
+  makeTeX engine mainFile maxHalts
+  notFounds <- listNotFounds <$> readFile (replaceExtension mainFile "log")
   if null notFounds
-    then putStrLn "no missing file! good..."
+    then
+      say "no missing file! good..."
     else do
+      sayError $ "missing files: " ++ unwords notFounds
       connected <- contactPackageRepo
       if connected
         then do
           packages <- tlmgrSearch notFounds
-          putStrLn $ "packages to be installed: " ++ unwords packages
+          when (null packages) $
+            sayErrorAndDie "no packages to install!"
+          say $ "packages to be installed: " ++ unwords packages
           tlmgrInstall packages
-        else
-          putStrLn "cannot reach the package repository!"
+        else do
+          sayErrorAndDie "cannot reach the package repository!"
 
-printUsage :: IO ()
-printUsage =
-  putStrLn $ "\n USAGE: $ strelitzia [ENGINE] TEXFILE"
-             ++ "\n The default ENGINE is pdflatex\n"

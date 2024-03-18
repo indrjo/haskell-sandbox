@@ -20,10 +20,13 @@ executable strelitzia
                       Tlmgr
                       TeX
                       CLI
+                      Say
     -- other-extensions:
     build-depends:    base
+                    , cond
                     , process
                     , filepath
+                    , directory
                     , parsec
                     , options
     hs-source-dirs:   src
