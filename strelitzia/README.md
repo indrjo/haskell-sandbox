@@ -1,39 +1,59 @@
+
 # Strelitzia
 
-All the code here used to be part of another repo, namely [minimal TeX Live](https://github.com/indrjo/minimal-texlive-installer.git). The program *strelitzia* has the same purpose: to install packages *on the fly*.
+Suppose you have installed a [minimal TeX Live](https://github.com/indrjo/minimal-texlive-installer.git) and you want to produce your document via, say,
 
-This program is written in [Haskell](https://www.haskell.org/), so you need all the machinery to compile the source code: if you do not have it, [click!](https://www.haskell.org/ghcup/)
+``` sh
+$ pdflatex main.tex
+```
 
-The whole work in this repository is *cabal*ised, hence during the build time all the necessary modules are downloaded and used. There is a small `Makefile`, so use it.
+It probably won't work owing to missing packages from your TeX Live. It is a work for *strelitzia*:
 
-A simple `make` on your terminal installs the program. At the end, you will have `~/.local/bin/strelitzia`, so make sure `~/.local/bin` is in your `PATH`. Indeed, `make uninstall` just gets rid of the program in that location.
+``` sh
+$ strelitzia main.tex
+```
+
+It coordinates a couple of actors: while it runs `pdflatex main.tex`, it extracts from the log the names of the missing files, invokes *tlmgr* to determine the parent packages and makes *tlmgr* install them. How the command `pdflatex main.tex` terminates (zero o non-zero exit code) is not relevant here.
+
+**Warning.** The dependencies of TeX Live are a hell: that means you may have to run *strelitzia* more than once to get all dependencies satisfied.
+
+Once your ecosystem is enough for your work, you can go back to using `pdflatex` as you are used to.
 
 
 ## Usage
 
-The most basic usage is the following:
-
 ```sh
-$ strelitzia --i main.tex
+$ strelitzia [OPTIONS] MAIN.tex
 ```
 
-which will try to compile the file `main.tex` with `pdflatex`. If you want another TeX engine, you have the flag `--c` to do so: for example
+* The default compiler is `pdflatex`, but you can change this with `--engine ENGINE`. Valid alternatives are for example `lualatex`, `xelatex` and so on...
+
+* You may want *strelitzia* to check whether all the packages required by the current project are installed before attempting the creation of the final document. Use `--check-imports PREAMBLE.tex` to indicate the file where are the *import* statements. So far, the program is able to detect the following keywords for mustering packages: `\usepackage`, `\documentclass` and `\requirepackage`.
+
+* The selected engine will halt at every error and wait for manual intervention by the user. To ignore and continue, it is sufficient to hit `Enter`. By default, *strelitzia* is able to do this for you for up to `50` times. If more than `50` halts occur, then the user has to press the key `Enter` as many times it will be needed. If you feel this limit is too low (it may be so in case of large projects and a *young* TeX Live), you can increase this value with `--max-halts NUM`. 
+
+**Warning.** In general, always refer to
 
 ```sh
-$ strelitzia --c lualatex --i main.tex
+$ strelitzia --help
 ```
 
-The switch `--o` is for the options to be passed to the selected TeX engine: for example
+because it may happen the latest changes are not properly documented yet.
+
+
+## Installation
+
+This program is written in [Haskell](https://www.haskell.org/), so you need all the machinery to compile the source code: if you do not have it, [click!](https://www.haskell.org/ghcup/) There is a `Makefile` here, so use it. 
 
 ```sh
-$ strelitzia --c lualatex --o "--synctex=1 --shell-escape" --i main.tex
+$ make
 ```
 
-In general, always refer to `strelitzia --help`, as it may happen the latest changes are not documented yet.
+installs the program: eventually, you will have `~/.local/bin/strelitzia`, so make sure `~/.local/bin` is in your `PATH`.
 
+```sh
+make uninstall
+```
 
-## Troubleshooting
+just gets rid of the binary.
 
-In general, refer to the log of the program. Every error will be captured and reported to you.
-
-...
