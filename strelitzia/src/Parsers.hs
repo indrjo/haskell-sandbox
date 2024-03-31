@@ -89,7 +89,7 @@ importKeyWords :: [String]
 importKeyWords =
   [ "\\documentclass"
   , "\\usepackage"
-  , "\\requirepackage"
+  , "\\RequirePackage"
   ]
 
 importKeyWordParser :: Parser String
