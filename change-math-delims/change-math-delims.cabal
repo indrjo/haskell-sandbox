@@ -1,0 +1,25 @@
+cabal-version:      3.0
+name:               change-math-delims
+version:            0.1.0.0
+-- synopsis:
+-- description:
+license:            MIT
+license-file:       LICENSE
+author:             indrjo
+maintainer:         dedej.indrjo@gmail.com
+-- copyright:
+category:           Text
+build-type:         Simple
+-- extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+
+executable change-math-delims
+    ghc-options:      -Wall
+    main-is:          Main.hs
+    -- other-modules:
+    -- other-extensions:
+    build-depends:    base,
+                      directory,
+                      filepath
+    hs-source-dirs:   .
+    default-language: Haskell2010
